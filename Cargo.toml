@@ -1,6 +1,12 @@
 [package]
-name = "miniseed"
+name    = "miniseed"
 version = "0.1.0"
 authors = ["Brian Savage <savage@uri.edu>"]
 
 [dependencies]
+chrono = "*"
+glob   = "*"
+libc   = "*"
+num    = "*"
+
+
