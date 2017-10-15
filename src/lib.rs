@@ -537,7 +537,6 @@ impl ms_record {
             .collect::<Vec<DateTime<Utc>>>()
     }
 
-    /*
     fn data(&self) -> Option<Data> {
         use std::slice::from_raw_parts_mut;
         let m = self.ptr();
@@ -567,7 +566,6 @@ impl ms_record {
         };
         Some(y)
     }
-     */
     fn check_data_type(&self, want: char) {
         if self.dtype() != want {
             panic!("Incorrect data type: requested: '{}, current: '{}'",
@@ -705,15 +703,15 @@ impl ms_record {
         }
         ms_record( pmsr )
     }
-    /*
+
     // Get Character data, if available
-    fn as_string(&self) -> Option<String> {
+    pub fn as_string(&self) -> Option<String> {
         match self.data() {
             Some(Data::Ascii(x)) => Some(String::from_utf8(x.to_vec()).unwrap()),
             _ => None
         }
     }
-     */
+
 }
 
 fn i8_to_string(vin: &[i8]) -> String {
