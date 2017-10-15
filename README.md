@@ -28,7 +28,6 @@ extern crate miniseed;
 ### Example
 ```rust
 extern crate miniseed;
-extern crate glob;
 
 use miniseed::ms_record;
 
