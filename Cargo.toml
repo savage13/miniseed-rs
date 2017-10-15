@@ -1,7 +1,15 @@
 [package]
 name    = "miniseed"
-version = "0.1.0"
-authors = ["Brian Savage <savage@uri.edu>"]
+version = "1.0.0"
+authors = ["Brian Savage <savage13@gmail.com>"]
+description = "MiniSEED library for rust"
+repository = "https://github.com/savage13/miniseed"
+homepage = "https://github.com/savage13/miniseed"
+documentation = "https://docs.rs/miniseed/"
+readme = "README.md"
+keywords = ["miniseed", "iris", "seismology"]
+license = "MIT"
+build = "build.rs"
 
 [dependencies]
 chrono = "*"
@@ -9,4 +17,6 @@ glob   = "*"
 libc   = "*"
 num    = "*"
 
+[build-dependencies]
+git2 = "*"
 
