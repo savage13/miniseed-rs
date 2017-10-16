@@ -12,11 +12,11 @@ license = "MIT"
 build = "build.rs"
 
 [dependencies]
-chrono = "*"
-glob   = "*"
-libc   = "*"
-num    = "*"
+chrono = "0.4"
+glob   = "0.2"
+libc   = "0.2"
+num    = "0.1"
 
 [build-dependencies]
-git2 = "*"
+git2 = "0.6"
 
