@@ -1,3 +1,33 @@
+
+//! MiniSEED Library for rust
+//!
+//! This is an wrapper around the IRIS libmseed library at
+//!   https://github.com/iris-edu/libmseed
+//!
+//! Currently, it can read miniseed records from a file or parse from
+//! a in memory buffer. The underlying data and timing information can
+//! be obtained from a ms_record.
+//!
+//! ```
+//! use miniseed::ms_record;
+//! let file = "tests/sample.miniseed";
+//! let rec = ms_record::read(file);
+//! assert_eq!(rec.to_string(), "PN_PPNAF_00_HHZ, 1, D, 512, 206 samples, 100 Hz, 2016-10-30 18:02:58.230 UTC");
+//! ```
+//!
+//! ```
+//! use miniseed::ms_record;
+//! use std::fs::File;
+//! use std::io::Read;
+//!
+//! let mut file = File::open("tests/sample.miniseed").unwrap();
+//! let mut buf = vec![];
+//! let _ = file.read_to_end(&mut buf).unwrap();
+//!
+//! let rec = ms_record::parse(&buf);
+//! assert_eq!(rec.to_string(), "PN_PPNAF_00_HHZ, 1, D, 512, 206 samples, 100 Hz, 2016-10-30 18:02:58.230 UTC");
+//! ```
+//!
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
