@@ -7,7 +7,7 @@ use git2::Repository;
 
 const REPO_URL: &str = "https://github.com/iris-edu/libmseed";
 const BUILD_DIR: &str = "src/libmseed";
-const GIT_REF: &str = "refs/heads/2.x"; // libmseed v3 broke the ABI
+const GIT_REF: &str = "refs/remotes/origin/2.x"; // libmseed v3 broke the ABI
 
 fn main() {
     let repo = match Repository::clone(REPO_URL, BUILD_DIR) {
