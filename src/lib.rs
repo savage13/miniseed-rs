@@ -1,4 +1,3 @@
-
 //! MiniSEED Library for rust
 //!
 //! This is an wrapper around the IRIS libmseed library at
@@ -49,8 +48,7 @@ use libc::c_char;
 
 extern crate glob;
 
-include!("bindings.rs");
-
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 unsafe impl Send for ms_record {}
 unsafe impl Sync for ms_record {}
@@ -514,7 +512,7 @@ impl ms_record {
         1.0 / m.samprate
     }
     /// Return the data sample type
-    /// 
+    ///
     /// - c - Character data
     /// - i - i32 data
     /// - f - f32 data
@@ -602,7 +600,7 @@ impl ms_record {
                    want, self.dtype());
         }
     }
-    
+
     /// Return the data as f64
     ///
     /// ```panic
@@ -634,7 +632,7 @@ impl ms_record {
         unsafe { from_raw_parts_mut(p as *mut f32, n) }
     }
     /// Return the data as i32
-    /// 
+    ///
     /// ```
     /// # use miniseed::ms_record;
     /// let file = "tests/sample.miniseed";
@@ -704,7 +702,7 @@ impl ms_record {
     /// # use miniseed::ms_record;
     /// use std::fs::File;
     /// use std::io::Read;
-    /// 
+    ///
     /// let mut file = File::open("tests/sample.miniseed").unwrap();
     /// let mut buf = vec![];
     /// let _ = file.read_to_end(&mut buf).unwrap();
@@ -716,7 +714,7 @@ impl ms_record {
         let verbose  = 1;
         let data     = 1;
 
-        // Copy Data 
+        // Copy Data
         let mut rec = record.to_vec();
         // Get Pointer to memory slice
         let prec = &mut rec[..];
@@ -779,3 +777,4 @@ impl Drop for ms_record {
 mod tests {
 
 }
+
