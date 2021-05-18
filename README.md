@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-miniseed = "1.0.0"
+miniseed = "^1"
 ```
 
 and this to your crate root:
@@ -25,7 +25,10 @@ and this to your crate root:
 extern crate miniseed;
 ```
 
-### Example
+### Examples
+
+Read a single record from a file and display its metadata:
+
 ```rust
 extern crate miniseed;
 
@@ -36,10 +39,29 @@ fn main() {
     let m = ms_record::read(file);
     println!("{}", m);
 }
-
 ```
+
+Read from `input.mseed`, and write only those records from the network `AU` to
+`output.mseed`:
+
+```rust
+extern crate miniseed;
+
+use miniseed::{ms_input, ms_output};
+
+fn main() {
+    let input = ms_input::open("input.mseed");
+    let mut output = ms_output::open("output.mseed").unwrap();
+
+    for record in input {
+        if record.network() == "AU" {
+            output.write(&record);
+        }
+    }
+}
+```
+
 
 ### Documentation
 
 https://docs.rs/miniseed/
-

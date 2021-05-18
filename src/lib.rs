@@ -1,3 +1,4 @@
+
 //! MiniSEED Library for rust
 //!
 //! This is an wrapper around the IRIS libmseed library at
@@ -44,7 +45,10 @@ use chrono::Duration;
 
 use std::ffi::CString;
 use std::path::Path;
-use libc::c_char;
+use libc::{c_char, c_int, c_void};
+
+use std::fs::File;
+use std::io::Write;
 
 extern crate glob;
 
@@ -398,6 +402,63 @@ impl <'a> Data<'a> {
     }
 }
 
+pub struct ms_input {
+    _filename: CString,
+    pmsfp: *mut MSFileParam,
+}
+
+impl ms_input {
+    pub fn open<S: AsRef<Path>>(file: S) -> ms_input {
+        let sfile : String = file.as_ref().to_string_lossy().into_owned();
+        let cfile = CString::new(sfile).unwrap();
+        return ms_input {
+            _filename: cfile,
+            pmsfp: std::ptr::null_mut() as *mut MSFileParam,
+        }
+    }
+
+    pub fn filename(&self) -> &str {
+        return self._filename.to_str().unwrap()
+    }
+}
+
+impl Iterator for ms_input {
+    type Item = ms_record;
+    fn next(&mut self) -> Option<ms_record> {
+        return ms_record::read_next(&self._filename, &mut self.pmsfp);
+    }
+}
+
+pub struct ms_output {
+    file: File,
+}
+
+unsafe extern "C" fn pack_handler_wrapper(buffer: *mut c_char, buflen: c_int, ptr: *mut c_void) {
+    let optr: *mut ms_output = ptr as *mut ms_output;
+    if let Some(o) = optr.as_mut() {
+        let chars: &[c_char] = std::slice::from_raw_parts(buffer, buflen as usize);
+        let bytes = &*(chars as *const [i8] as *const [u8]);
+        o.file.write(bytes as &[u8]).unwrap();
+    } else {
+        println!("optr was null");
+    }
+}
+
+impl ms_output {
+    pub fn open<S: AsRef<Path>>(filename: S) -> std::io::Result<ms_output> {
+        return File::create(filename).map(|fh| ms_output {file: fh})
+    }
+
+    pub fn write(&mut self, record: &ms_record) {
+        let ptr = (self as *mut ms_output) as *mut c_void;
+        let rec_ptr: *const MSRecord = &(record.ptr());
+        let rec_mut_ptr: *mut MSRecord = rec_ptr as *mut MSRecord_s;
+        unsafe {
+            msr_pack(rec_mut_ptr, Some(pack_handler_wrapper), ptr,
+                     std::ptr::null_mut(), 1, 0);
+        }
+    }
+}
 
 impl ms_record {
     /// Get pointer to wrapped MSRecord value
@@ -423,16 +484,22 @@ impl ms_record {
         let sfile : String = file.as_ref().to_string_lossy().into_owned();
         let cfile = CString::new(sfile).unwrap();
 
+        let mut pmsfp = std::ptr::null_mut() as *mut MSFileParam;
+        return ms_record::read_next(&cfile, &mut pmsfp).unwrap();
+    }
+
+    pub fn read_next(file: &CString, pmsfp: &mut *mut MSFileParam) -> Option<ms_record>
+    {
         let verbose     : flag = 1;
         let dataflag    : flag = 1;
         let skipnotdata : flag = 1;
         let mut pmsr = ms_record::null();
-        let mut pmsfp = std::ptr::null_mut() as *mut MSFileParam;
-        let retcode = unsafe{
+
+        let retcode = unsafe {
             // WTF: https://github.com/rust-lang/rust/issues/17417
-            ms_readmsr_r ( ((&mut pmsfp) as *mut _) as *mut *mut MSFileParam,
+            ms_readmsr_r ( ((pmsfp) as *mut _) as *mut *mut MSFileParam,
                               ((&mut pmsr) as *mut _) as *mut *mut MSRecord,
-                              cfile.as_ptr(),
+                              file.as_ptr(),
                               0,
                               std::ptr::null_mut(), // fpos
                               std::ptr::null_mut(), // last
@@ -440,11 +507,14 @@ impl ms_record {
                               dataflag,
                               verbose)
         };
-        if retcode != MS_NOERROR as i32 {
-            println!("retcode: {}", retcode);
-        }
-        ms_record ( pmsr )
 
+        if retcode == MS_NOERROR as i32 {
+            return Some(ms_record(pmsr));
+        } else if retcode == MS_ENDOFFILE as i32 {
+            return None
+        } else {
+            panic!("readmsr_r retcode: {}", retcode)
+        }
     }
     /// Return the MiniSEED Record FSDH Header,
     ///   this is typically used internally
@@ -458,6 +528,34 @@ impl ms_record {
     pub fn header(&self) -> fsdh_s {
         let m = self.ptr();
         unsafe { * (m.fsdh as *mut fsdh_s) as  fsdh_s }
+    }
+
+    /// Return the network code
+    pub fn network(&self) -> String {
+        i8_to_string(&self.header().network)
+    }
+
+    /// Return the station code
+    pub fn station(&self) -> String {
+        i8_to_string(&self.header().station)
+    }
+
+    /// Return the location code
+    pub fn location(&self) -> String {
+        i8_to_string(&self.header().location)
+    }
+
+    /// Return the channel code
+    pub fn channel(&self) -> String {
+        i8_to_string(&self.header().channel)
+    }
+
+    /// Return the data quality code
+    pub fn dataquality(&self) -> String {
+        i8_to_string(&[self.header().dataquality])
+    }
+    pub fn sequence_number(&self) -> i32 {
+        self.ptr().sequence_number
     }
     /// Return the start time
     ///
@@ -512,7 +610,7 @@ impl ms_record {
         1.0 / m.samprate
     }
     /// Return the data sample type
-    ///
+    /// 
     /// - c - Character data
     /// - i - i32 data
     /// - f - f32 data
@@ -600,7 +698,7 @@ impl ms_record {
                    want, self.dtype());
         }
     }
-
+    
     /// Return the data as f64
     ///
     /// ```panic
@@ -632,7 +730,7 @@ impl ms_record {
         unsafe { from_raw_parts_mut(p as *mut f32, n) }
     }
     /// Return the data as i32
-    ///
+    /// 
     /// ```
     /// # use miniseed::ms_record;
     /// let file = "tests/sample.miniseed";
@@ -702,7 +800,7 @@ impl ms_record {
     /// # use miniseed::ms_record;
     /// use std::fs::File;
     /// use std::io::Read;
-    ///
+    /// 
     /// let mut file = File::open("tests/sample.miniseed").unwrap();
     /// let mut buf = vec![];
     /// let _ = file.read_to_end(&mut buf).unwrap();
@@ -714,7 +812,7 @@ impl ms_record {
         let verbose  = 1;
         let data     = 1;
 
-        // Copy Data
+        // Copy Data 
         let mut rec = record.to_vec();
         // Get Pointer to memory slice
         let prec = &mut rec[..];
@@ -777,4 +875,3 @@ impl Drop for ms_record {
 mod tests {
 
 }
-

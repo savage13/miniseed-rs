@@ -1,6 +1,6 @@
 [package]
 name    = "miniseed"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["Brian Savage <savage13@gmail.com>"]
 description = "MiniSEED library for rust"
 repository = "https://github.com/savage13/miniseed-rs"
