@@ -1,7 +1,9 @@
 extern crate glob;
 extern crate miniseed;
+extern crate tempfile;
 
 use miniseed::{ms_input, ms_output, ms_record};
+use tempfile::tempdir;
 
 #[test]
 fn read() {
@@ -25,9 +27,13 @@ fn read_multiple() {
         println!("{}", m);
     }
 
+    let dir = tempdir().unwrap();
+    let file_path = dir.path().join("multiple_out.seed");
+
     // Sequence Number is incorrect, but everything else is "ok"
-    let mut out = ms_output::open("tests/multiple_out.seed").unwrap();
+    let mut out = ms_output::open(file_path).unwrap();
     for m in &ms {
         out.write(m);
     }
+    dir.close().unwrap();
 }
