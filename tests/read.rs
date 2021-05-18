@@ -1,6 +1,5 @@
-
-extern crate miniseed;
 extern crate glob;
+extern crate miniseed;
 
 use miniseed::ms_record;
 
