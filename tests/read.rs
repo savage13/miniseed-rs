@@ -1,8 +1,7 @@
-
-extern crate miniseed;
 extern crate glob;
+extern crate miniseed;
 
-use miniseed::{ms_record, ms_input, ms_output};
+use miniseed::{ms_input, ms_output, ms_record};
 
 #[test]
 fn read() {
@@ -21,7 +20,7 @@ fn read() {
 #[test]
 fn read_multiple() {
     let input = ms_input::open("tests/multiple.seed");
-    let ms : Vec<_> = input.collect();
+    let ms: Vec<_> = input.collect();
     for m in &ms {
         println!("{}", m);
     }
@@ -31,5 +30,4 @@ fn read_multiple() {
     for m in &ms {
         out.write(m);
     }
-
 }

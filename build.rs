@@ -1,11 +1,9 @@
-
-
-extern crate git2;
 extern crate bindgen;
+extern crate git2;
 
-use std::path::{Path, PathBuf};
 use git2::Repository;
 use std::env;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 const REPO_URL: &str = "https://github.com/iris-edu/libmseed";
@@ -15,7 +13,7 @@ const GIT_REF: &str = "refs/remotes/origin/2.x"; // libmseed v3 broke the ABI
 fn fetch_libmseed(dir: &str) {
     println!("fetching libmseed");
     let repo = match Repository::clone(REPO_URL, dir) {
-        Ok( creepo ) => { creepo },
+        Ok(creepo) => creepo,
         Err(e) => panic!("Failed to update/clone repo: {}", e),
     };
 
@@ -33,7 +31,6 @@ fn make_libmseed(dir: &str) {
 }
 
 fn main() {
-
     if !Path::new(BUILD_DIR).is_dir() {
         fetch_libmseed(BUILD_DIR);
     }
@@ -51,7 +48,7 @@ fn main() {
     let path = env::current_dir().unwrap();
     println!("The current directory is {}", path.display());
 
-    let path : PathBuf = [BUILD_DIR, "libmseed.h"].iter().collect();
+    let path: PathBuf = [BUILD_DIR, "libmseed.h"].iter().collect();
     if !path.exists() {
         panic!("libmseed header file: libmseed.h does not exist");
     }
@@ -76,5 +73,3 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("couldn't write bindings");
 }
-
-    

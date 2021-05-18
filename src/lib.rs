@@ -1,4 +1,3 @@
-
 //! MiniSEED Library for rust
 //!
 //! This is an wrapper around the IRIS libmseed library at
@@ -36,16 +35,16 @@ extern crate chrono;
 extern crate libc;
 extern crate num;
 
-use chrono::Utc;
-use chrono::NaiveDate;
-use chrono::NaiveDateTime;
 use chrono::DateTime;
 use chrono::Duration;
+use chrono::NaiveDate;
+use chrono::NaiveDateTime;
+use chrono::Utc;
 //use chrono::Timelike;
 
+use libc::{c_char, c_int, c_void};
 use std::ffi::CString;
 use std::path::Path;
-use libc::{c_char, c_int, c_void};
 
 use std::fs::File;
 use std::io::Write;
@@ -71,7 +70,6 @@ pub struct ms_record(*mut MSRecord);
 // #[derive(Debug)]
 // pub struct ms_trace(*mut MSTrace);
 
-
 // macro_rules! trace_loop {
 //     ($name:ident, $tfunc:ident, $vfunc:ident, $t:ty) => {
 //         pub fn $name(&self) -> Option<$t> {
@@ -90,18 +88,30 @@ pub struct ms_record(*mut MSRecord);
 // }
 
 macro_rules! cast {
-    ($x:ident, $t:ty) => { ($x as *mut _) as *mut $t };
-    (ptr, $x:ident, $t:ty) => { ((&mut $x) as *mut _) as *mut *mut $t };
+    ($x:ident, $t:ty) => {
+        ($x as *mut _) as *mut $t
+    };
+    (ptr, $x:ident, $t:ty) => {
+        ((&mut $x) as *mut _) as *mut *mut $t
+    };
 }
 
 pub fn fmin<T: num::Float>(v: &[T]) -> T {
     let mut vf = v[0];
-    for vi in v { if *vi < vf { vf = *vi; }  }
+    for vi in v {
+        if *vi < vf {
+            vf = *vi;
+        }
+    }
     vf
 }
 pub fn fmax<T: num::Float>(v: &[T]) -> T {
     let mut vf = v[0];
-    for vi in v { if *vi > vf { vf = *vi; }  }
+    for vi in v {
+        if *vi > vf {
+            vf = *vi;
+        }
+    }
     vf
 }
 // fn tmin(v: &[DateTime<Utc>]) -> DateTime<Utc> {
@@ -122,8 +132,8 @@ pub fn utc_to_f64(t: &DateTime<Utc>) -> f64 {
 pub fn f64_to_utc(t: f64) -> DateTime<Utc> {
     let i = t.trunc() as i64;
     let f = (t.fract() * 1e9) as u32;
-    let t = NaiveDateTime::from_timestamp(i,f);
-    DateTime::<Utc>::from_utc(t,Utc)
+    let t = NaiveDateTime::from_timestamp(i, f);
+    DateTime::<Utc>::from_utc(t, Utc)
 }
 
 // fn tmax_to_f64(v: &[DateTime<Utc>]) -> f64 {
@@ -253,7 +263,6 @@ pub fn f64_to_utc(t: f64) -> DateTime<Utc> {
 //     }
 // }
 
-
 // impl ms_group {
 //     pub fn new() -> ms_group {
 //         let null = std::ptr::null_mut() as *mut MSTraceGroup;
@@ -371,14 +380,25 @@ impl BTime {
     pub fn as_mut_ptr(&mut self) -> *mut BTime {
         self as *mut BTime
     }
-    pub fn zero() ->  BTime {
-        BTime { year:0,day:0,hour:0,min:0,sec:0,fract:0,unused:0}
+    pub fn zero() -> BTime {
+        BTime {
+            year: 0,
+            day: 0,
+            hour: 0,
+            min: 0,
+            sec: 0,
+            fract: 0,
+            unused: 0,
+        }
     }
     pub fn to_datetime(&self) -> DateTime<Utc> {
         // Convert Year/DayOfYear and Hour/Minute/Second/MicroSecond to DateTime
-        let d = NaiveDate::from_yo(self.year as i32, self.day as u32)
-            .and_hms_micro(self.hour as u32, self.min as u32,
-                           self.sec as u32, self.fract as u32 *100);
+        let d = NaiveDate::from_yo(self.year as i32, self.day as u32).and_hms_micro(
+            self.hour as u32,
+            self.min as u32,
+            self.sec as u32,
+            self.fract as u32 * 100,
+        );
         // Convert to UTC DateTime
         DateTime::<Utc>::from_utc(d, Utc)
     }
@@ -391,7 +411,7 @@ pub enum Data<'a> {
     Ascii(&'a [u8]),
 }
 
-impl <'a> Data<'a> {
+impl<'a> Data<'a> {
     pub fn to_f64(&self) -> Vec<f64> {
         match self {
             &Data::Int(y) => y.iter().map(|&i| i as f64).collect(),
@@ -409,16 +429,16 @@ pub struct ms_input {
 
 impl ms_input {
     pub fn open<S: AsRef<Path>>(file: S) -> ms_input {
-        let sfile : String = file.as_ref().to_string_lossy().into_owned();
+        let sfile: String = file.as_ref().to_string_lossy().into_owned();
         let cfile = CString::new(sfile).unwrap();
         return ms_input {
             _filename: cfile,
             pmsfp: std::ptr::null_mut() as *mut MSFileParam,
-        }
+        };
     }
 
     pub fn filename(&self) -> &str {
-        return self._filename.to_str().unwrap()
+        return self._filename.to_str().unwrap();
     }
 }
 
@@ -446,7 +466,7 @@ unsafe extern "C" fn pack_handler_wrapper(buffer: *mut c_char, buflen: c_int, pt
 
 impl ms_output {
     pub fn open<S: AsRef<Path>>(filename: S) -> std::io::Result<ms_output> {
-        return File::create(filename).map(|fh| ms_output {file: fh})
+        return File::create(filename).map(|fh| ms_output { file: fh });
     }
 
     pub fn write(&mut self, record: &ms_record) {
@@ -454,8 +474,14 @@ impl ms_output {
         let rec_ptr: *const MSRecord = &(record.ptr());
         let rec_mut_ptr: *mut MSRecord = rec_ptr as *mut MSRecord_s;
         unsafe {
-            msr_pack(rec_mut_ptr, Some(pack_handler_wrapper), ptr,
-                     std::ptr::null_mut(), 1, 0);
+            msr_pack(
+                rec_mut_ptr,
+                Some(pack_handler_wrapper),
+                ptr,
+                std::ptr::null_mut(),
+                1,
+                0,
+            );
         }
     }
 }
@@ -479,39 +505,41 @@ impl ms_record {
     /// assert_eq!(rec.to_string(), "PN_PPNAF_00_HHZ, 1, D, 512, 206 samples, 100 Hz, 2016-10-30 18:02:58.230 UTC");
     /// ```
     pub fn read<S>(file: S) -> ms_record
-        where S: AsRef<Path>
+    where
+        S: AsRef<Path>,
     {
-        let sfile : String = file.as_ref().to_string_lossy().into_owned();
+        let sfile: String = file.as_ref().to_string_lossy().into_owned();
         let cfile = CString::new(sfile).unwrap();
 
         let mut pmsfp = std::ptr::null_mut() as *mut MSFileParam;
         return ms_record::read_next(&cfile, &mut pmsfp).unwrap();
     }
 
-    pub fn read_next(file: &CString, pmsfp: &mut *mut MSFileParam) -> Option<ms_record>
-    {
-        let verbose     : flag = 1;
-        let dataflag    : flag = 1;
-        let skipnotdata : flag = 1;
+    pub fn read_next(file: &CString, pmsfp: &mut *mut MSFileParam) -> Option<ms_record> {
+        let verbose: flag = 1;
+        let dataflag: flag = 1;
+        let skipnotdata: flag = 1;
         let mut pmsr = ms_record::null();
 
         let retcode = unsafe {
             // WTF: https://github.com/rust-lang/rust/issues/17417
-            ms_readmsr_r ( ((pmsfp) as *mut _) as *mut *mut MSFileParam,
-                              ((&mut pmsr) as *mut _) as *mut *mut MSRecord,
-                              file.as_ptr(),
-                              0,
-                              std::ptr::null_mut(), // fpos
-                              std::ptr::null_mut(), // last
-                              skipnotdata,
-                              dataflag,
-                              verbose)
+            ms_readmsr_r(
+                ((pmsfp) as *mut _) as *mut *mut MSFileParam,
+                ((&mut pmsr) as *mut _) as *mut *mut MSRecord,
+                file.as_ptr(),
+                0,
+                std::ptr::null_mut(), // fpos
+                std::ptr::null_mut(), // last
+                skipnotdata,
+                dataflag,
+                verbose,
+            )
         };
 
         if retcode == MS_NOERROR as i32 {
             return Some(ms_record(pmsr));
         } else if retcode == MS_ENDOFFILE as i32 {
-            return None
+            return None;
         } else {
             panic!("readmsr_r retcode: {}", retcode)
         }
@@ -527,7 +555,7 @@ impl ms_record {
     /// ```
     pub fn header(&self) -> fsdh_s {
         let m = self.ptr();
-        unsafe { * (m.fsdh as *mut fsdh_s) as  fsdh_s }
+        unsafe { *(m.fsdh as *mut fsdh_s) as fsdh_s }
     }
 
     /// Return the network code
@@ -580,7 +608,7 @@ impl ms_record {
         let n = self.npts();
         let b = self.start();
         let dt = self.delta();
-        b + Duration::microseconds( ( (n-1) as f64 * dt * 1e6) as i64 )
+        b + Duration::microseconds(((n - 1) as f64 * dt * 1e6) as i64)
     }
     /// Return the time of the next sample beyond the record
     ///   assuming a constant sample rate
@@ -595,7 +623,7 @@ impl ms_record {
         let n = self.npts();
         let b = self.start();
         let dt = self.delta();
-        b + Duration::microseconds( ( n as f64 * dt * 1e6) as i64 )
+        b + Duration::microseconds((n as f64 * dt * 1e6) as i64)
     }
     /// Return the sample rate
     ///
@@ -610,7 +638,7 @@ impl ms_record {
         1.0 / m.samprate
     }
     /// Return the data sample type
-    /// 
+    ///
     /// - c - Character data
     /// - i - i32 data
     /// - f - f32 data
@@ -670,35 +698,38 @@ impl ms_record {
         let n = self.npts();
         let y = match self.dtype() {
             'i' => {
-                let y : &[i32] = unsafe {from_raw_parts_mut(p as *mut i32, n) };
+                let y: &[i32] = unsafe { from_raw_parts_mut(p as *mut i32, n) };
                 Data::Int(y)
-            },
+            }
             'f' => {
-                let y : &[f32] = unsafe { from_raw_parts_mut(p as *mut f32, n) };
+                let y: &[f32] = unsafe { from_raw_parts_mut(p as *mut f32, n) };
                 Data::Float(y)
-            },
+            }
             'd' => {
-                let y : &[f64] = unsafe { from_raw_parts_mut(p as *mut f64, n) };
+                let y: &[f64] = unsafe { from_raw_parts_mut(p as *mut f64, n) };
                 Data::Double(y)
-            },
+            }
             'a' => {
-                let y : &[u8] = unsafe { from_raw_parts_mut(p as *mut u8, n) };
+                let y: &[u8] = unsafe { from_raw_parts_mut(p as *mut u8, n) };
                 Data::Ascii(y)
             }
             _ => {
                 println!("Unknown data type: {}", self.dtype());
                 return None;
-            },
+            }
         };
         Some(y)
     }
     fn check_data_type(&self, want: char) {
         if self.dtype() != want {
-            panic!("Incorrect data type: requested: '{}, current: '{}'",
-                   want, self.dtype());
+            panic!(
+                "Incorrect data type: requested: '{}, current: '{}'",
+                want,
+                self.dtype()
+            );
         }
     }
-    
+
     /// Return the data as f64
     ///
     /// ```panic
@@ -730,7 +761,7 @@ impl ms_record {
         unsafe { from_raw_parts_mut(p as *mut f32, n) }
     }
     /// Return the data as i32
-    /// 
+    ///
     /// ```
     /// # use miniseed::ms_record;
     /// let file = "tests/sample.miniseed";
@@ -754,7 +785,7 @@ impl ms_record {
     /// ```
     pub fn min(&self) -> f64 {
         match self.data_type() {
-            'i' => *self.data_i32().iter().min().unwrap()  as f64,
+            'i' => *self.data_i32().iter().min().unwrap() as f64,
             'f' => fmin(self.data_f32()) as f64,
             'd' => fmin(self.data_f64()) as f64,
             'a' => panic!("attempt to take min of ascii data"),
@@ -771,7 +802,7 @@ impl ms_record {
     /// ```
     pub fn max(&self) -> f64 {
         match self.data_type() {
-            'i' => *self.data_i32().iter().max().unwrap()  as f64,
+            'i' => *self.data_i32().iter().max().unwrap() as f64,
             'f' => fmax(self.data_f32()) as f64,
             'd' => fmax(self.data_f64()) as f64,
             'a' => panic!("attempt to take min of ascii data"),
@@ -800,7 +831,7 @@ impl ms_record {
     /// # use miniseed::ms_record;
     /// use std::fs::File;
     /// use std::io::Read;
-    /// 
+    ///
     /// let mut file = File::open("tests/sample.miniseed").unwrap();
     /// let mut buf = vec![];
     /// let _ = file.read_to_end(&mut buf).unwrap();
@@ -809,10 +840,10 @@ impl ms_record {
     /// assert_eq!(rec.to_string(), "PN_PPNAF_00_HHZ, 1, D, 512, 206 samples, 100 Hz, 2016-10-30 18:02:58.230 UTC");
     /// ```
     pub fn parse(record: &[u8]) -> ms_record {
-        let verbose  = 1;
-        let data     = 1;
+        let verbose = 1;
+        let data = 1;
 
-        // Copy Data 
+        // Copy Data
         let mut rec = record.to_vec();
         // Get Pointer to memory slice
         let prec = &mut rec[..];
@@ -827,51 +858,61 @@ impl ms_record {
         if ret != MS_NOERROR as i32 {
             println!("retcode: {}", ret);
         }
-        ms_record( pmsr )
+        ms_record(pmsr)
     }
 
     // Get Character data, if available
     pub fn as_string(&self) -> Option<String> {
         match self.data() {
             Some(Data::Ascii(x)) => Some(String::from_utf8(x.to_vec()).unwrap()),
-            _ => None
+            _ => None,
         }
     }
-
 }
 
 fn i8_to_string(vin: &[i8]) -> String {
-    let v : Vec<u8> = vin.iter()
-        .map(|x| *x as u8)      // cast i8 as u8
+    let v: Vec<u8> = vin
+        .iter()
+        .map(|x| *x as u8) // cast i8 as u8
         .filter(|x| *x != 0u8) // remove null terminators
         .collect();
-    String::from_utf8(v).unwrap()  // convert to  string
+    String::from_utf8(v).unwrap() // convert to  string
 }
 use std::fmt;
 impl fmt::Display for ms_record {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let v = self.ptr();
         let s = self.id();
-        write!(f, "{}, {}, {}, {}, {} samples, {} Hz, {}", s, v.sequence_number,
-               v.dataquality as u8 as char, v.reclen, v.samplecnt,
-               v.samprate, self.start())
+        write!(
+            f,
+            "{}, {}, {}, {}, {} samples, {} Hz, {}",
+            s,
+            v.sequence_number,
+            v.dataquality as u8 as char,
+            v.reclen,
+            v.samplecnt,
+            v.samprate,
+            self.start()
+        )
     }
 }
 impl Drop for ms_record {
     fn drop(&mut self) {
         //println!("Dropping ms_record: {:?}!", self.ptr);
         unsafe {
-            ms_readmsr (&mut (self.0 as *mut _),
-                        std::ptr::null_mut(),
-                        0,
-                        std::ptr::null_mut(),
-                        std::ptr::null_mut(),
-                        0, 0, 0);
+            ms_readmsr(
+                &mut (self.0 as *mut _),
+                std::ptr::null_mut(),
+                0,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                0,
+                0,
+                0,
+            );
         }
     }
 }
 
 #[cfg(test)]
-mod tests {
-
-}
+mod tests {}
