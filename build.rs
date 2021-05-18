@@ -44,8 +44,18 @@ fn main() {
     println!("cargo:rustc-link-search=native=../libmseed/");
     println!("Generate");
 
+
+    let path = env::current_dir().unwrap();
+    println!("The current directory is {}", path.display());
+
+    let path : PathBuf = [BUILD_DIR, "libmseed.h"].iter().collect();
+    if !path.exists() {
+        panic!("libmseed header file: libmseed.h does not exist");
+    }
+
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
+        .clang_arg("-I./src/libmseed")
         .clang_arg("-I../libmseed")
         .allowlist_type("MS.*")
         .allowlist_var("MS_.*")
