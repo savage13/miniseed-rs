@@ -40,10 +40,13 @@ fn main() {
 
     make_libmseed(BUILD_DIR);
 
-    println!("cargo:rustc-link-lib=static=mseed");
-    println!("cargo:rustc-link-search=native=../libmseed/");
-    println!("Generate");
+    let search_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let search_dir = Path::new(&search_dir).join("src").join("libmseed");
 
+    println!("cargo:rustc-link-lib=static=mseed");
+    println!("cargo:rustc-link-search=native={}", search_dir.display());
+    println!("Searching for libraries at: {}", search_dir.display());
+    println!("Generate bindings.rs");
 
     let path = env::current_dir().unwrap();
     println!("The current directory is {}", path.display());
