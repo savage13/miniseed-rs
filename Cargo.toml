@@ -18,5 +18,5 @@ libc   = "0.2"
 num    = "0.1"
 
 [build-dependencies]
-git2 = "0.6"
+git2 = "0.13"
 
