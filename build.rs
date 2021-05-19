@@ -10,17 +10,6 @@ const REPO_URL: &str = "https://github.com/iris-edu/libmseed";
 const BUILD_DIR: &str = "src/libmseed";
 const GIT_REF: &str = "refs/remotes/origin/2.x"; // libmseed v3 broke the ABI
 
-fn fetch_libmseed(dir: &str) {
-    println!("fetching libmseed");
-    let repo = match Repository::clone(REPO_URL, dir) {
-        Ok(creepo) => creepo,
-        Err(e) => panic!("Failed to update/clone repo: {}", e),
-    };
-
-    let branch = repo.revparse_single(GIT_REF).unwrap();
-    repo.reset(&branch, git2::ResetType::Hard, None).unwrap();
-}
-
 fn make_libmseed(dir: &str) {
     let path = std::fs::canonicalize(dir).unwrap();
     let _ok = env::set_current_dir(&path).is_ok();
@@ -31,10 +20,6 @@ fn make_libmseed(dir: &str) {
 }
 
 fn main() {
-    if !Path::new(BUILD_DIR).is_dir() {
-        fetch_libmseed(BUILD_DIR);
-    }
-
     make_libmseed(BUILD_DIR);
 
     let search_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
